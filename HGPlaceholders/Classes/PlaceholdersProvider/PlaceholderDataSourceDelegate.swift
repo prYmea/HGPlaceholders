@@ -11,12 +11,12 @@ import Foundation
 /// This class is responsible for implementing the `UITableViewDataSource` and `UITableViewDelegate` protocols.
 /// Each placeholder view is an tableview with one cell, that takes all the tableview frame
 class PlaceholderDataSourceDelegate: NSObject {
-    
+
     // MARK: properties
-    
+
     /// The placeholder object
     let placeholder: Placeholder
-    
+
     // MARK: init methods
 
     /// Create and return a PlaceholderDataSourceDelegate object with the specified Placeholder
@@ -25,9 +25,9 @@ class PlaceholderDataSourceDelegate: NSObject {
     init(placeholder: Placeholder) {
         self.placeholder = placeholder
     }
-    
-    // MARK: Utilities methods 
-    
+
+    // MARK: Utilities methods
+
     /// fill the placeholder cell to the texts and styles
     ///
     /// - Parameters:
@@ -35,26 +35,26 @@ class PlaceholderDataSourceDelegate: NSObject {
     ///   - placeholder: the placeholder object
     ///   - tintColor: the tint color to apply
     func fill(cell: CellPlaceholding, to placeholder: Placeholder, tintColor: UIColor?) {
-        
+
         /* if the the placeholder created by xib and data/style are nil, we should keep the xib data/style */
-        
+
         // apply style
         if let style = placeholder.style {
             cell.apply(style: style, tintColor: tintColor)
         }
-        
+
         // apply data
         if let data = placeholder.data {
             cell.apply(data: data)
         }
     }
-    
+
     /// Animate the cell (UICollectionViewCell / UITableViewCell)
     ///
     /// - Parameter cell: the cell to animate, it should be conform to the protocol CellPlaholding
     func animate(cell: CellPlaceholding) {
         // animate the imageView
-        
+
         guard let imageView = cell.placeholderImageView else { return }
         let rotate = CGAffineTransform(rotationAngle: -0.2)
         let stretchAndRotate = rotate.scaledBy(x: 0.5, y: 0.5)
@@ -65,10 +65,10 @@ class PlaceholderDataSourceDelegate: NSObject {
             let rotate = CGAffineTransform(rotationAngle: 0.0)
             let stretchAndRotate = rotate.scaledBy(x: 1.0, y: 1.0)
             imageView.transform = stretchAndRotate
-            
+
         }, completion: nil)
     }
-    
+
     /// Returns the height of the scroll view by removing the top and bottom inset + the height of the refresh control
     ///
     /// - Parameter scrollView: the scroll view
@@ -85,7 +85,7 @@ class PlaceholderDataSourceDelegate: NSObject {
         }
         return height
     }
-    
+
 }
 
 // MARK: table view data source methods
@@ -94,11 +94,19 @@ class PlaceholderDataSourceDelegate: NSObject {
  * The placeholder template data source, adopt the UITableViewDataSource protocol
  */
 extension PlaceholderDataSourceDelegate: UITableViewDataSource {
-    
+
+    func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCellEditingStyle {
+        return .none
+    }
+
+    func tableView(_ tableView: UITableView, shouldIndentWhileEditingRowAt indexPath: IndexPath) -> Bool {
+        return false
+    }
+
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return 1
     }
-    
+
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let reuseIdentifier = placeholder.cellIdentifier ?? PlaceholderTableViewCell.reuseIdentifier
         guard let cell = tableView.dequeueReusableCell(withIdentifier: reuseIdentifier) else {
@@ -108,26 +116,26 @@ extension PlaceholderDataSourceDelegate: UITableViewDataSource {
                     + "and that you registered the cell beforehand"
             )
         }
-       
+
         cell.selectionStyle = .none
         // If the cell does not inherit from PlaceholderTableViewCell, the data and the style can't be applied
         guard let placeholderTableViewCell = cell as? PlaceholderTableViewCell else {
             return cell
         }
-        
+
         fill(cell: placeholderTableViewCell, to: placeholder, tintColor: tableView.tintColor)
-        
+
         // forward action to placeholder delegate
         placeholderTableViewCell.onActionButtonTap = { [unowned self] in
             guard let placeholderTableView = (tableView as? TableView) else { return }
             placeholderTableView.placeholderDelegate?.view(tableView, actionButtonTappedFor: self.placeholder)
         }
-        
+
         return cell
     }
 }
 
-// MARK: - table view delegate methods 
+// MARK: - table view delegate methods
 
 /**
  * The placeholder template delegate, adopt the UITableViewDelegate protocol
@@ -135,47 +143,47 @@ extension PlaceholderDataSourceDelegate: UITableViewDataSource {
  * And tableView:willDisplay: to animate the cell if needed
  */
 extension PlaceholderDataSourceDelegate: UITableViewDelegate {
-    
+
     // the placeholder cell takes always the size of the table view
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        
+
         var tableViewHeight = height(of: tableView)
-        
+
         // subtract tableHeaderView Height out of height
         let style = placeholder.style
         if style?.shouldShowTableViewHeader != true {
             tableViewHeight -= tableView.tableHeaderView?.bounds.height ?? 0
         }
-        
+
         // subtract tableFooterView Height out of height
         if style?.shouldShowTableViewFooter != true {
             tableViewHeight -= tableView.tableFooterView?.bounds.height ?? 0
         }
-        
+
         return tableViewHeight
     }
-    
+
     // animate the cell
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        
+
         if placeholder.style?.isAnimated == false {
             return
         }
-        
+
         guard let placeholderTableViewCell = cell as? PlaceholderTableViewCell else { return }
         animate(cell: placeholderTableViewCell)
     }
 }
 
 
-// MARK: - collection view data source methods 
+// MARK: - collection view data source methods
 
 extension PlaceholderDataSourceDelegate: UICollectionViewDataSource {
 
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return 1
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let reuseIdentifier = placeholder.cellIdentifier ?? PlaceholderCollectionViewCell.reuseIdentifier
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath)
@@ -184,9 +192,9 @@ extension PlaceholderDataSourceDelegate: UICollectionViewDataSource {
         guard let placeholderCollectionViewCell = cell as? PlaceholderCollectionViewCell else {
             return cell
         }
-        
+
         fill(cell: placeholderCollectionViewCell, to: placeholder, tintColor: collectionView.tintColor)
-        
+
         // forward action to placeholder delegate
         placeholderCollectionViewCell.onActionButtonTap = { [unowned self] in
             guard let placeholderCollectionView = collectionView as? CollectionView else { return }
@@ -197,17 +205,17 @@ extension PlaceholderDataSourceDelegate: UICollectionViewDataSource {
 }
 
 extension PlaceholderDataSourceDelegate: UICollectionViewDelegateFlowLayout {
-    
+
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize {
         return .zero
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForFooterInSection section: Int) -> CGSize {
         return .zero
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        
+
         let collectionViewHeight = height(of: collectionView)
         return CGSize(width: collectionView.bounds.width, height: collectionViewHeight)
     }
