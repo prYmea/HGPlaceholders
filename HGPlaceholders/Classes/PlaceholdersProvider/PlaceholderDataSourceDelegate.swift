@@ -95,7 +95,7 @@ class PlaceholderDataSourceDelegate: NSObject {
  */
 extension PlaceholderDataSourceDelegate: UITableViewDataSource {
 
-    func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCellEditingStyle {
+    func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
         return .none
     }
 
